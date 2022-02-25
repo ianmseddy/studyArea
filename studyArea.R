@@ -8,14 +8,17 @@ defineModule(sim, list(
   name = "studyArea",
   description = "",
   keywords = "",
-  authors = structure(list(list(given = c("First", "Middle"), family = "Last", role = c("aut", "cre"), email = "email@example.com", comment = NULL)), class = "person"),
+  authors = structure(list(list(given = c("First", "Middle"), family = "Last", 
+                                role = c("aut", "cre"), email = "email@example.com", comment = NULL)), class = "person"),
   childModules = character(0),
   version = list(studyArea = "0.0.0.9000"),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = list("README.md", "studyArea.Rmd"), ## same file
-  reqdPkgs = list("PredictiveEcology/SpaDES.core@development (>=1.0.10.9002)", ,    "ggplot2"),
+  reqdPkgs = list("PredictiveEcology/SpaDES.core@development (>=1.0.10.9002)", 
+                  "fasterize", "sf" ,"raster", "ggplot2", "PredictiveEcology/climateData",
+                  "PredictiveEcology/LandR@development"),
   parameters = rbind(
     #defineParameter("paramName", "paramClass", value, min, max, "parameter description"),
     defineParameter(".plots", "character", "screen", NA, NA,
@@ -36,11 +39,14 @@ defineModule(sim, list(
   ),
   inputObjects = bindrows(
     #expectsInput("objectName", "objectClass", "input object description", sourceURL, ...),
-    expectsInput(objectName = NA, objectClass = NA, desc = NA, sourceURL = NA)
+    expectsInput(objectName = "studyArea", objectClass = "sf", desc = NA, sourceURL = NA),
+    expectsInput(objectName = "rasterToMatch", objectClass = "rasterLayer", desc = NA, sourceURL = NA),
   ),
   outputObjects = bindrows(
     #createsOutput("objectName", "objectClass", "output object description", ...),
-    createsOutput(objectName = NA, objectClass = NA, desc = NA)
+    createsOutput(objectName = "projectedClimateRasters", objectClass = "list", desc = NA),
+    createsOutput(objectName = "sppEquiv", objectClass = "data.table", desc = NA),
+    createsOutput(objectName = "sppColors", objectClass = "character", desc = NA)
   )
 ))
 
@@ -126,10 +132,34 @@ doEvent.studyArea = function(sim, eventTime, eventType) {
 
 ### template initialization
 Init <- function(sim) {
-  # # ! ----- EDIT BELOW ----- ! #
 
-  # ! ----- STOP EDITING ----- ! #
-
+ MDCfile <- file.path(inputPath(sim), "historicalMDC.tif")
+ MDCzip <- file.path(inputPath(sim), "Quebec_historic_monthly.zip")
+ if (!file.exists(MDCfile)){
+   googledrive::drive_download(as_id("1MR9ghBimxsgnMQULLdpbTqELYafyb5Pr"),
+                 path = MDCzip, overwrite = TRUE)
+   archive::archive_extract(archive = file.path(inputPath(sim), "Quebec_historic_monthly.zip"), 
+                            dir = file.path(inputPath(sim), "Quebec_historic_monthly"))
+  historicalMDC <- climateData::makeMDC(inputPath = file.path(inputPath(sim), "Quebec_historic_monthly/Quebec"), years = 1991:2020)
+  historicalMDC <- raster::susbet(historicalMDC, c(paste0("mdc", 2001:2020)))
+  historicalMDC <- projectRaster(historicalMDC, sim$rasterToMatch)
+  writeRaster(historicalMDC, file.path(inputPath(sim), "historicalMDC.tif"), datatype = "INT2U")
+ } else {
+   historicalMDC <- raster::stack("inputs/historicalMDC.tif")
+   names(historicalMDC) <- paste0("year", 2001:2020)
+ }
+  sim$historicalClimateRasters <- list("MDC" = historicalMDC)
+  
+  
+  sim$sppEquiv <- LandR::sppEquivalencies_CA
+  sim$sppEquiv <- sim$sppEquiv[LandR %in% c("Abie_bal", "Pice_mar",
+                                            "Pinu_ban", "Lari_lar",
+                                            "Pice_gla", "Betu_pap", 
+                                            "Popu_tre"),]
+  sim$sppColors <- LandR::sppColors(sppEquiv = sim$sppEquiv, sppEquivCol = "LandR", palette = "Accent")
+  
+  
+  
   return(invisible(sim))
 }
 
@@ -177,27 +207,31 @@ Event2 <- function(sim) {
 }
 
 .inputObjects <- function(sim) {
-  # Any code written here will be run during the simInit for the purpose of creating
-  # any objects required by this module and identified in the inputObjects element of defineModule.
-  # This is useful if there is something required before simulation to produce the module
-  # object dependencies, including such things as downloading default datasets, e.g.,
-  # downloadData("LCC2005", modulePath(sim)).
-  # Nothing should be created here that does not create a named object in inputObjects.
-  # Any other initiation procedures should be put in "init" eventType of the doEvent function.
-  # Note: the module developer can check if an object is 'suppliedElsewhere' to
-  # selectively skip unnecessary steps because the user has provided those inputObjects in the
-  # simInit call, or another module will supply or has supplied it. e.g.,
-  # if (!suppliedElsewhere('defaultColor', sim)) {
-  #   sim$map <- Cache(prepInputs, extractURL('map')) # download, extract, load file from url in sourceURL
-  # }
 
   #cacheTags <- c(currentModule(sim), "function:.inputObjects") ## uncomment this if Cache is being used
-  dPath <- asPath(getOption("reproducible.destinationPath", dataPath(sim)), 1)
+  dPath <- file.path('modules', currentModule(sim), "data")
   message(currentModule(sim), ": using dataPath '", dPath, "'.")
 
-  # ! ----- EDIT BELOW ----- ! #
-
-  # ! ----- STOP EDITING ----- ! #
+  if (!suppliedElsewhere("studyArea", sim)){
+    sim$studyArea <- st_read(file.path(dPath, "study_region", "study_region.shp"))
+    
+  }
+  if (!suppliedElsewhere("rasterToMatch", sim)) {
+    
+    sim$rasterToMatch <- Cache(prepInputsLCC, 
+                               year = 2010, 
+                               destinationPath = dPath,
+                               studyArea = sim$studyArea)
+    sim$rasterToMatch <- Cache(projectRaster, 
+                               sim$rasterToMatch, 
+                               crs = crs(sim$rasterToMatch),
+                               res = c(250, 250), method = "ngb",
+                               filename = file.path(dPath, "guillaumeRTM.tif"),
+                               overwrite = TRUE)
+    sim$studyArea <- st_transform(sim$studyArea, crs = crs(sim$rasterToMatch))
+  
+  }
+  
   return(invisible(sim))
 }
 

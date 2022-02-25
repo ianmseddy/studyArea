@@ -1,0 +1,3 @@
+"file" "checksum" "filesize" "algorithm"
+"CAN_LC_2010_CAL.tif" "d7016c43101e4a22" "1625703086" "xxhash64"
+"CanadaLandcover2010.zip" "6167f1280f4b45ba" "1332065648" "xxhash64"

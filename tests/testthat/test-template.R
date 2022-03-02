@@ -9,7 +9,7 @@
 ## 3. Modify the test description based on the content you are testing.
 ##
 test_that("test Event1 and Event2.", {
-  module <- list("studyArea")
+  module <- list("Quebec_fires_preamble")
   path <- list(
     modulePath = "C:/Ian/temp",
     outputPath = file.path(tempdir(), "outputs")
@@ -17,7 +17,7 @@ test_that("test Event1 and Event2.", {
   parameters <- list(
     #.progress = list(type = graphical, interval = 1),
     .globals = list(verbose = FALSE),
-    studyArea = list(.saveInitialTime = NA)
+    Quebec_fires_preamble = list(.saveInitialTime = NA)
   )
   times <- list(start = 0, end = 1)
 

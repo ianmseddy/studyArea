@@ -8,7 +8,7 @@ defineModule(sim, list(
   name = "studyArea",
   description = "",
   keywords = "",
-  authors = structure(list(list(given = c("First", "Middle"), family = "Last", 
+  authors = structure(list(list(given = c("First", "Middle"), family = "Last",
                                 role = c("aut", "cre"), email = "email@example.com", comment = NULL)), class = "person"),
   childModules = character(0),
   version = list(studyArea = "0.0.0.9000"),
@@ -16,7 +16,7 @@ defineModule(sim, list(
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = list("README.md", "studyArea.Rmd"), ## same file
-  reqdPkgs = list("PredictiveEcology/SpaDES.core@development (>=1.0.10.9002)", 
+  reqdPkgs = list("PredictiveEcology/SpaDES.core@development (>=1.0.10.9002)",
                   "fasterize", "sf" ,"raster", "ggplot2", "PredictiveEcology/climateData",
                   "PredictiveEcology/LandR@development"),
   parameters = rbind(
@@ -39,7 +39,7 @@ defineModule(sim, list(
   ),
   inputObjects = bindrows(
     #expectsInput("objectName", "objectClass", "input object description", sourceURL, ...),
-    expectsInput(objectName = "studyArea", objectClass = "sf", desc = NA, sourceURL = NA),
+    expectsInput(objectName = "StudyArea", objectClass = "sf", desc = NA, sourceURL = NA),
     expectsInput(objectName = "rasterToMatch", objectClass = "rasterLayer", desc = NA, sourceURL = NA),
   ),
   outputObjects = bindrows(
@@ -138,7 +138,7 @@ Init <- function(sim) {
  if (!file.exists(MDCfile)){
    googledrive::drive_download(as_id("1MR9ghBimxsgnMQULLdpbTqELYafyb5Pr"),
                  path = MDCzip, overwrite = TRUE)
-   archive::archive_extract(archive = file.path(inputPath(sim), "Quebec_historic_monthly.zip"), 
+   archive::archive_extract(archive = file.path(inputPath(sim), "Quebec_historic_monthly.zip"),
                             dir = file.path(inputPath(sim), "Quebec_historic_monthly"))
   historicalMDC <- climateData::makeMDC(inputPath = file.path(inputPath(sim), "Quebec_historic_monthly/Quebec"), years = 1991:2020)
   historicalMDC <- raster::susbet(historicalMDC, c(paste0("mdc", 2001:2020)))
@@ -149,17 +149,17 @@ Init <- function(sim) {
    names(historicalMDC) <- paste0("year", 2001:2020)
  }
   sim$historicalClimateRasters <- list("MDC" = historicalMDC)
-  
-  
+
+
   sim$sppEquiv <- LandR::sppEquivalencies_CA
   sim$sppEquiv <- sim$sppEquiv[LandR %in% c("Abie_bal", "Pice_mar",
                                             "Pinu_ban", "Lari_lar",
-                                            "Pice_gla", "Betu_pap", 
+                                            "Pice_gla", "Betu_pap",
                                             "Popu_tre"),]
   sim$sppColors <- LandR::sppColors(sppEquiv = sim$sppEquiv, sppEquivCol = "LandR", palette = "Accent")
-  
-  
-  
+
+
+
   return(invisible(sim))
 }
 
@@ -212,26 +212,26 @@ Event2 <- function(sim) {
   dPath <- file.path('modules', currentModule(sim), "data")
   message(currentModule(sim), ": using dataPath '", dPath, "'.")
 
-  if (!suppliedElsewhere("studyArea", sim)){
-    sim$studyArea <- st_read(file.path(dPath, "study_region", "study_region.shp"))
-    
+  if (!suppliedElsewhere("StudyArea", sim)){
+    sim$StudyArea <- st_read(file.path(dPath, "study_region", "study_region.shp"))
+
   }
   if (!suppliedElsewhere("rasterToMatch", sim)) {
-    
-    sim$rasterToMatch <- Cache(prepInputsLCC, 
-                               year = 2010, 
+
+    sim$rasterToMatch <- Cache(prepInputsLCC,
+                               year = 2010,
                                destinationPath = dPath,
                                studyArea = sim$studyArea)
-    sim$rasterToMatch <- Cache(projectRaster, 
-                               sim$rasterToMatch, 
+    sim$rasterToMatch <- Cache(projectRaster,
+                               sim$rasterToMatch,
                                crs = crs(sim$rasterToMatch),
                                res = c(250, 250), method = "ngb",
                                filename = file.path(dPath, "guillaumeRTM.tif"),
                                overwrite = TRUE)
     sim$studyArea <- st_transform(sim$studyArea, crs = crs(sim$rasterToMatch))
-  
+
   }
-  
+
   return(invisible(sim))
 }
 

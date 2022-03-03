@@ -39,12 +39,11 @@ defineModule(sim, list(
   ),
   inputObjects = bindrows(
     #expectsInput("objectName", "objectClass", "input object description", sourceURL, ...),
-    expectsInput(objectName = "StudyArea", objectClass = "sf", desc = NA, sourceURL = NA),
+    expectsInput(objectName = "studyArea", objectClass = "sf", desc = NA, sourceURL = NA),
     expectsInput(objectName = "rasterToMatch", objectClass = "rasterLayer", desc = NA, sourceURL = NA),
   ),
   outputObjects = bindrows(
     #createsOutput("objectName", "objectClass", "output object description", ...),
-    createsOutput(objectName = "projectedClimateRasters", objectClass = "list", desc = NA),
     createsOutput(objectName = "sppEquiv", objectClass = "data.table", desc = NA),
     createsOutput(objectName = "sppColors", objectClass = "character", desc = NA)
   )
@@ -133,23 +132,6 @@ doEvent.studyArea = function(sim, eventTime, eventType) {
 ### template initialization
 Init <- function(sim) {
 
- MDCfile <- file.path(inputPath(sim), "historicalMDC.tif")
- MDCzip <- file.path(inputPath(sim), "Quebec_historic_monthly.zip")
- if (!file.exists(MDCfile)){
-   googledrive::drive_download(as_id("1MR9ghBimxsgnMQULLdpbTqELYafyb5Pr"),
-                 path = MDCzip, overwrite = TRUE)
-   archive::archive_extract(archive = file.path(inputPath(sim), "Quebec_historic_monthly.zip"),
-                            dir = file.path(inputPath(sim), "Quebec_historic_monthly"))
-  historicalMDC <- climateData::makeMDC(inputPath = file.path(inputPath(sim), "Quebec_historic_monthly/Quebec"), years = 1991:2020)
-  historicalMDC <- raster::susbet(historicalMDC, c(paste0("mdc", 2001:2020)))
-  historicalMDC <- projectRaster(historicalMDC, sim$rasterToMatch)
-  writeRaster(historicalMDC, file.path(inputPath(sim), "historicalMDC.tif"), datatype = "INT2U")
- } else {
-   historicalMDC <- raster::stack("inputs/historicalMDC.tif")
-   names(historicalMDC) <- paste0("year", 2001:2020)
- }
-  sim$historicalClimateRasters <- list("MDC" = historicalMDC)
-
 
   sim$sppEquiv <- LandR::sppEquivalencies_CA
   sim$sppEquiv <- sim$sppEquiv[LandR %in% c("Abie_bal", "Pice_mar",
@@ -212,8 +194,8 @@ Event2 <- function(sim) {
   dPath <- file.path('modules', currentModule(sim), "data")
   message(currentModule(sim), ": using dataPath '", dPath, "'.")
 
-  if (!suppliedElsewhere("StudyArea", sim)){
-    sim$StudyArea <- st_read(file.path(dPath, "study_region", "study_region.shp"))
+  if (!suppliedElsewhere("studyArea", sim)){
+    sim$studyArea <- st_read(file.path(dPath, "study_region", "study_region.shp"))
 
   }
   if (!suppliedElsewhere("rasterToMatch", sim)) {

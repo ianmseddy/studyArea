@@ -5,17 +5,17 @@
 ## they are namespaced to the module, just like functions in R packages.
 ## If exact location is required, functions will be: `sim$.mods$<moduleName>$FunctionName`.
 defineModule(sim, list(
-  name = "studyArea",
+  name = "Quebec_fires_preamble",
   description = "",
   keywords = "",
   authors = structure(list(list(given = c("First", "Middle"), family = "Last",
                                 role = c("aut", "cre"), email = "email@example.com", comment = NULL)), class = "person"),
   childModules = character(0),
-  version = list(studyArea = "0.0.0.9000"),
+  version = list(Quebec_fires_preamble = "0.0.0.9000"),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
-  documentation = list("README.md", "studyArea.Rmd"), ## same file
+  documentation = list("README.md", "Quebec_fires_preamble.Rmd"), ## same file
   reqdPkgs = list("PredictiveEcology/SpaDES.core@development (>=1.0.10.9002)",
                   "fasterize", "sf" ,"raster", "ggplot2", "PredictiveEcology/climateData",
                   "PredictiveEcology/LandR@development"),
@@ -52,7 +52,7 @@ defineModule(sim, list(
 ## event types
 #   - type `init` is required for initialization
 
-doEvent.studyArea = function(sim, eventTime, eventType) {
+doEvent.Quebec_fires_preamble = function(sim, eventTime, eventType) {
   switch(
     eventType,
     init = {
@@ -63,8 +63,8 @@ doEvent.studyArea = function(sim, eventTime, eventType) {
       sim <- Init(sim)
 
       # schedule future event(s)
-      sim <- scheduleEvent(sim, P(sim)$.plotInitialTime, "studyArea", "plot")
-      sim <- scheduleEvent(sim, P(sim)$.saveInitialTime, "studyArea", "save")
+      sim <- scheduleEvent(sim, P(sim)$.plotInitialTime, "Quebec_fires_preamble", "plot")
+      sim <- scheduleEvent(sim, P(sim)$.saveInitialTime, "Quebec_fires_preamble", "save")
     },
     plot = {
       # ! ----- EDIT BELOW ----- ! #
@@ -74,24 +74,11 @@ doEvent.studyArea = function(sim, eventTime, eventType) {
       # schedule future event(s)
 
       # e.g.,
-      #sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval, "studyArea", "plot")
+      #sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval, "Quebec_fires_preamble", "plot")
 
       # ! ----- STOP EDITING ----- ! #
     },
-    save = {
-      # ! ----- EDIT BELOW ----- ! #
-      # do stuff for this event
-
-      # e.g., call your custom functions/methods here
-      # you can define your own methods below this `doEvent` function
-
-      # schedule future event(s)
-
-      # e.g.,
-      # sim <- scheduleEvent(sim, time(sim) + P(sim)$.saveInterval, "studyArea", "save")
-
-      # ! ----- STOP EDITING ----- ! #
-    },
+    save = {},
     event1 = {
       # ! ----- EDIT BELOW ----- ! #
       # do stuff for this event
@@ -102,21 +89,7 @@ doEvent.studyArea = function(sim, eventTime, eventType) {
       # schedule future event(s)
 
       # e.g.,
-      # sim <- scheduleEvent(sim, time(sim) + increment, "studyArea", "templateEvent")
-
-      # ! ----- STOP EDITING ----- ! #
-    },
-    event2 = {
-      # ! ----- EDIT BELOW ----- ! #
-      # do stuff for this event
-
-      # e.g., call your custom functions/methods here
-      # you can define your own methods below this `doEvent` function
-
-      # schedule future event(s)
-
-      # e.g.,
-      # sim <- scheduleEvent(sim, time(sim) + increment, "studyArea", "templateEvent")
+      # sim <- scheduleEvent(sim, time(sim) + increment, "Quebec_fires_preamble", "templateEvent")
 
       # ! ----- STOP EDITING ----- ! #
     },
@@ -132,16 +105,12 @@ doEvent.studyArea = function(sim, eventTime, eventType) {
 ### template initialization
 Init <- function(sim) {
 
-
   sim$sppEquiv <- LandR::sppEquivalencies_CA
   sim$sppEquiv <- sim$sppEquiv[LandR %in% c("Abie_bal", "Pice_mar",
                                             "Pinu_ban", "Lari_lar",
                                             "Pice_gla", "Betu_pap",
                                             "Popu_tre"),]
   sim$sppColors <- LandR::sppColors(sppEquiv = sim$sppEquiv, sppEquivCol = "LandR", palette = "Accent")
-
-
-
   return(invisible(sim))
 }
 
@@ -195,8 +164,8 @@ Event2 <- function(sim) {
   message(currentModule(sim), ": using dataPath '", dPath, "'.")
 
   if (!suppliedElsewhere("studyArea", sim)){
-    sim$studyArea <- st_read(file.path(dPath, "study_region", "study_region.shp"))
-
+    sim$studyArea <- prepInputs(url = "https://drive.google.com/file/d/1OYWKXv3OciReK8PhQY0E7sFL5A-u3P6L/view?usp=sharing",
+                                destinationPath = dPath)
   }
   if (!suppliedElsewhere("rasterToMatch", sim)) {
 

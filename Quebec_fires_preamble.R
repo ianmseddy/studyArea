@@ -89,8 +89,8 @@ Init <- function(sim) {
 }
 
 .inputObjects <- function(sim) {
-  #cacheTags <- c(currentModule(sim), "function:.inputObjects") ## uncomment this if Cache is being used
-  dPath <- file.path('modules', currentModule(sim), "data")
+  cacheTags <- c(currentModule(sim), "function:.inputObjects")
+  dPath <- asPath(getOption("reproducible.destinationPath", dataPath(sim)), 1)
   message(currentModule(sim), ": using dataPath '", dPath, "'.")
 
   if (!suppliedElsewhere("studyArea", sim)) {
@@ -109,7 +109,7 @@ Init <- function(sim) {
                                sim$rasterToMatch,
                                crs = crs(sim$rasterToMatch),
                                res = c(250, 250), method = "ngb",
-                               filename = file.path(dPath, "guillaumeRTM.tif"),
+                               filename = file.path(dPath, "RTM_Quebec_studyArea.tif"),
                                overwrite = TRUE)
     sim$studyArea <- st_transform(sim$studyArea, crs = crs(sim$rasterToMatch))
 

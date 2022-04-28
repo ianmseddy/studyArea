@@ -8,15 +8,17 @@ defineModule(sim, list(
   name = "Quebec_fires_preamble",
   description = "",
   keywords = "",
-  authors = structure(list(list(given = c("First", "Middle"), family = "Last",
-                                role = c("aut", "cre"), email = "email@example.com", comment = NULL)), class = "person"),
+  authors = c(
+    person("Ian", "Eddy", email = "ian.eddy@nrcan-rncan.gc.ca", role = c("aut", "cre")),
+    person("Alex M", "Chubaty", email = "achubaty@for-cast.ca", role = c("aut"))
+  ),
   childModules = character(0),
   version = list(Quebec_fires_preamble = "0.0.0.9000"),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = list("README.md", "Quebec_fires_preamble.Rmd"), ## same file
-  reqdPkgs = list("PredictiveEcology/SpaDES.core@development (>=1.0.10.9002)",
+  reqdPkgs = list("PredictiveEcology/SpaDES.core@development (>= 1.0.10.9002)",
                   "fasterize", "sf" ,"raster", "ggplot2", "PredictiveEcology/climateData",
                   "PredictiveEcology/LandR@development"),
   parameters = rbind(
@@ -66,33 +68,6 @@ doEvent.Quebec_fires_preamble = function(sim, eventTime, eventType) {
       sim <- scheduleEvent(sim, P(sim)$.plotInitialTime, "Quebec_fires_preamble", "plot")
       sim <- scheduleEvent(sim, P(sim)$.saveInitialTime, "Quebec_fires_preamble", "save")
     },
-    plot = {
-      # ! ----- EDIT BELOW ----- ! #
-      # do stuff for this event
-
-      plotFun(sim) # example of a plotting function
-      # schedule future event(s)
-
-      # e.g.,
-      #sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval, "Quebec_fires_preamble", "plot")
-
-      # ! ----- STOP EDITING ----- ! #
-    },
-    save = {},
-    event1 = {
-      # ! ----- EDIT BELOW ----- ! #
-      # do stuff for this event
-
-      # e.g., call your custom functions/methods here
-      # you can define your own methods below this `doEvent` function
-
-      # schedule future event(s)
-
-      # e.g.,
-      # sim <- scheduleEvent(sim, time(sim) + increment, "Quebec_fires_preamble", "templateEvent")
-
-      # ! ----- STOP EDITING ----- ! #
-    },
     warning(paste("Undefined event type: \'", current(sim)[1, "eventType", with = FALSE],
                   "\' in module \'", current(sim)[1, "moduleName", with = FALSE], "\'", sep = ""))
   )
@@ -104,71 +79,28 @@ doEvent.Quebec_fires_preamble = function(sim, eventTime, eventType) {
 
 ### template initialization
 Init <- function(sim) {
-
   sim$sppEquiv <- LandR::sppEquivalencies_CA
   sim$sppEquiv <- sim$sppEquiv[LandR %in% c("Abie_bal", "Pice_mar",
                                             "Pinu_ban", "Lari_lar",
                                             "Pice_gla", "Betu_pap",
-                                            "Popu_tre"),]
+                                            "Popu_tre"), ]
   sim$sppColors <- LandR::sppColors(sppEquiv = sim$sppEquiv, sppEquivCol = "LandR", palette = "Accent")
   return(invisible(sim))
 }
 
-### template for save events
-Save <- function(sim) {
-  # ! ----- EDIT BELOW ----- ! #
-  # do stuff for this event
-  sim <- saveFiles(sim)
-
-  # ! ----- STOP EDITING ----- ! #
-  return(invisible(sim))
-}
-
-### template for plot events
-plotFun <- function(sim) {
-  # ! ----- EDIT BELOW ----- ! #
-  # do stuff for this event
-  sampleData <- data.frame("TheSample" = sample(1:10, replace = TRUE))
-  Plots(sampleData, fn = ggplotFn)
-
-  # ! ----- STOP EDITING ----- ! #
-  return(invisible(sim))
-}
-
-### template for your event1
-Event1 <- function(sim) {
-  # ! ----- EDIT BELOW ----- ! #
-  # THE NEXT TWO LINES ARE FOR DUMMY UNIT TESTS; CHANGE OR DELETE THEM.
-  # sim$event1Test1 <- " this is test for event 1. " # for dummy unit test
-  # sim$event1Test2 <- 999 # for dummy unit test
-
-  # ! ----- STOP EDITING ----- ! #
-  return(invisible(sim))
-}
-
-### template for your event2
-Event2 <- function(sim) {
-  # ! ----- EDIT BELOW ----- ! #
-  # THE NEXT TWO LINES ARE FOR DUMMY UNIT TESTS; CHANGE OR DELETE THEM.
-  # sim$event2Test1 <- " this is test for event 2. " # for dummy unit test
-  # sim$event2Test2 <- 777  # for dummy unit test
-
-  # ! ----- STOP EDITING ----- ! #
-  return(invisible(sim))
-}
-
 .inputObjects <- function(sim) {
-
   #cacheTags <- c(currentModule(sim), "function:.inputObjects") ## uncomment this if Cache is being used
   dPath <- file.path('modules', currentModule(sim), "data")
   message(currentModule(sim), ": using dataPath '", dPath, "'.")
 
-  if (!suppliedElsewhere("studyArea", sim)){
-    sim$studyArea <- prepInputs(url = "https://drive.google.com/file/d/1OYWKXv3OciReK8PhQY0E7sFL5A-u3P6L/view?usp=sharing",
-                                destinationPath = dPath)
+  if (!suppliedElsewhere("studyArea", sim)) {
+    sim$studyArea <- prepInputs(
+      url = "https://drive.google.com/file/d/1OYWKXv3OciReK8PhQY0E7sFL5A-u3P6L/",
+      destinationPath = dPath
+    )
   }
-  if (!suppliedElsewhere("rasterToMatch", sim)) {
 
+  if (!suppliedElsewhere("rasterToMatch", sim)) {
     sim$rasterToMatch <- Cache(prepInputsLCC,
                                year = 2010,
                                destinationPath = dPath,

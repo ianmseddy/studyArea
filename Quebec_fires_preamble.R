@@ -41,8 +41,12 @@ defineModule(sim, list(
   ),
   inputObjects = bindrows(
     #expectsInput("objectName", "objectClass", "input object description", sourceURL, ...),
-    expectsInput(objectName = "studyArea", objectClass = "sf", desc = NA, sourceURL = NA),
-    expectsInput(objectName = "rasterToMatch", objectClass = "rasterLayer", desc = NA, sourceURL = NA),
+    createsOutput("rasterToMatch", "RasterLayer", desc = "Raster to match, based on study area."),
+    createsOutput("rasterToMatchLarge", "RasterLayer", desc = "Raster to match (large) based on studyAreaLarge."),
+    createsOutput("rasterToMatchReporting", "RasterLayer", desc = "Raster to match based on studyAreaReporting."),
+    createsOutput("studyArea", "SpatialPolygons", desc = "Buffered study area in which to run simulations."),
+    createsOutput("studyAreaLarge", "SpatialPolygons", desc = "Buffered study area used for parameterization/calibration."),
+    createsOutput("studyAreaReporting", "SpatialPolygons", desc = "Unbuffered study area used for reporting/post-processing.")
   ),
   outputObjects = bindrows(
     #createsOutput("objectName", "objectClass", "output object description", ...),
@@ -93,11 +97,34 @@ Init <- function(sim) {
   dPath <- asPath(getOption("reproducible.destinationPath", dataPath(sim)), 1)
   message(currentModule(sim), ": using dataPath '", dPath, "'.")
 
-  if (!suppliedElsewhere("studyArea", sim)) {
+  if (!suppliedElsewhere("studyAreaReporting", sim)) {
     sim$studyArea <- prepInputs(
       url = "https://drive.google.com/file/d/1OYWKXv3OciReK8PhQY0E7sFL5A-u3P6L/",
-      destinationPath = dPath
-    )
+      destinationPath = dPath,
+      fun = "sf::st_read",
+      overwrite = TRUE
+    ) ## use sf for now; convert to spdf at end
+  }
+
+  if (!suppliedElsewhere("studyArea", sim)) {
+    sim$studyArea <- st_buffer(studyAreaReporting, 20000) ## 20 km buffer
+  }
+
+  if (!suppliedElsewhere("studyAreaLarge", sim)) {
+    sim$studyAreaLarge <- sim$studyArea
+  }
+
+  if (!suppliedElsewhere("rasterToMatchReporting", sim)) {
+    sim$rasterToMatchReporting <- Cache(prepInputsLCC,
+                                        year = 2010,
+                                        destinationPath = dPath,
+                                        studyArea = sim$studyAreaReporting)
+    sim$rasterToMatchReporting <- Cache(projectRaster,
+                                        sim$rasterToMatchReporting,
+                                        crs = crs(sim$rasterToMatchReporting),
+                                        res = c(250, 250), method = "ngb",
+                                        filename = file.path(dPath, "RTMR_Quebec_studyArea.tif"),
+                                        overwrite = TRUE)
   }
 
   if (!suppliedElsewhere("rasterToMatch", sim)) {
@@ -111,9 +138,24 @@ Init <- function(sim) {
                                res = c(250, 250), method = "ngb",
                                filename = file.path(dPath, "RTM_Quebec_studyArea.tif"),
                                overwrite = TRUE)
-    sim$studyArea <- st_transform(sim$studyArea, crs = crs(sim$rasterToMatch))
-
   }
+
+  if (!suppliedElsewhere("rasterToMatchLarge", sim)) {
+    sim$rasterToMatchLarge <- Cache(prepInputsLCC,
+                                    year = 2010,
+                                    destinationPath = dPath,
+                                    studyArea = sim$studyAreaLarge)
+    sim$rasterToMatchLarge <- Cache(projectRaster,
+                                    sim$rasterToMatchLarge,
+                                    crs = crs(sim$rasterToMatchLarge),
+                                    res = c(250, 250), method = "ngb",
+                                    filename = file.path(dPath, "RTML_Quebec_studyArea.tif"),
+                                    overwrite = TRUE)
+  }
+
+  sim$studyArea <- st_transform(sim$studyArea, crs = crs(sim$rasterToMatch)) %>% as_Spatial()
+  sim$studyAreaLarge <- st_transform(sim$studyAreaLarge, crs = crs(sim$rasterToMatchLarge)) %>% as_Spatial()
+  sim$studyAreaReporting <- st_transform(sim$studyAreaReporting, crs = crs(sim$rasterToMatchReporting)) %>% as_Spatial()
 
   return(invisible(sim))
 }

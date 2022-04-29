@@ -98,7 +98,7 @@ Init <- function(sim) {
   message(currentModule(sim), ": using dataPath '", dPath, "'.")
 
   if (!suppliedElsewhere("studyAreaReporting", sim)) {
-    sim$studyArea <- prepInputs(
+    sim$studyAreaReporting <- prepInputs(
       url = "https://drive.google.com/file/d/1OYWKXv3OciReK8PhQY0E7sFL5A-u3P6L/",
       destinationPath = dPath,
       fun = "sf::st_read",

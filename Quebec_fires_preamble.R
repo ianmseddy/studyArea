@@ -101,13 +101,14 @@ Init <- function(sim) {
     sim$studyAreaReporting <- prepInputs(
       url = "https://drive.google.com/file/d/1OYWKXv3OciReK8PhQY0E7sFL5A-u3P6L/",
       destinationPath = dPath,
-      fun = "sf::st_read",
+      fun = "sf::st_read",  ## use sf for now; convert to spdf at end
       overwrite = TRUE
-    ) ## use sf for now; convert to spdf at end
+    ) %>%
+      st_make_valid()
   }
 
   if (!suppliedElsewhere("studyArea", sim)) {
-    sim$studyArea <- st_buffer(studyAreaReporting, 20000) ## 20 km buffer
+    sim$studyArea <- st_buffer(sim$studyAreaReporting, 20000) ## 20 km buffer
   }
 
   if (!suppliedElsewhere("studyAreaLarge", sim)) {
@@ -158,11 +159,6 @@ Init <- function(sim) {
   sim$studyAreaReporting <- st_transform(sim$studyAreaReporting, crs = crs(sim$rasterToMatchReporting)) %>% as_Spatial()
 
   return(invisible(sim))
-}
-
-ggplotFn <- function(data, ...) {
-  ggplot(data, aes(TheSample)) +
-    geom_histogram(...)
 }
 
 ### add additional events as needed by copy/pasting from above

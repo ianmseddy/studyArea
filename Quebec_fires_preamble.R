@@ -50,8 +50,9 @@ defineModule(sim, list(
   ),
   outputObjects = bindrows(
     #createsOutput("objectName", "objectClass", "output object description", ...),
+    createsOutput(objectName = "sppColorVect", objectClass = "character", desc = NA),
     createsOutput(objectName = "sppEquiv", objectClass = "data.table", desc = NA),
-    createsOutput(objectName = "sppColors", objectClass = "character", desc = NA)
+    createsOutput(objectName = "sppEquivCol", objectClass = "data.table", desc = NA)
   )
 ))
 
@@ -83,12 +84,18 @@ doEvent.Quebec_fires_preamble = function(sim, eventTime, eventType) {
 
 ### template initialization
 Init <- function(sim) {
+  sim$sppEquivCol <- "LandR"
+
   sim$sppEquiv <- LandR::sppEquivalencies_CA
-  sim$sppEquiv <- sim$sppEquiv[LandR %in% c("Abie_bal", "Pice_mar",
-                                            "Pinu_ban", "Lari_lar",
-                                            "Pice_gla", "Betu_pap",
+  sim$sppEquiv <- sim$sppEquiv[LandR %in% c("Abie_bal",
+                                            "Betu_pap",
+                                            "Lari_lar",
+                                            "Pice_gla", "Pice_mar",
+                                            "Pinu_ban",
                                             "Popu_tre"), ]
-  sim$sppColors <- LandR::sppColors(sppEquiv = sim$sppEquiv, sppEquivCol = "LandR", palette = "Accent")
+  sim$sppColorVect <- LandR::sppColors(sppEquiv = sim$sppEquiv, sppEquivCol = sim$sppEquivCol,
+                                       palette = "Accent")
+
   return(invisible(sim))
 }
 

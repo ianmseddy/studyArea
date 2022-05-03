@@ -70,8 +70,8 @@ doEvent.Quebec_fires_preamble = function(sim, eventTime, eventType) {
       sim <- Init(sim)
 
       # schedule future event(s)
-      sim <- scheduleEvent(sim, P(sim)$.plotInitialTime, "Quebec_fires_preamble", "plot")
-      sim <- scheduleEvent(sim, P(sim)$.saveInitialTime, "Quebec_fires_preamble", "save")
+      #sim <- scheduleEvent(sim, P(sim)$.plotInitialTime, "Quebec_fires_preamble", "plot")
+      #sim <- scheduleEvent(sim, P(sim)$.saveInitialTime, "Quebec_fires_preamble", "save")
     },
     warning(paste("Undefined event type: \'", current(sim)[1, "eventType", with = FALSE],
                   "\' in module \'", current(sim)[1, "moduleName", with = FALSE], "\'", sep = ""))

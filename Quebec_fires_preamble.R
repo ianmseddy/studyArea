@@ -371,6 +371,9 @@ Init <- function(sim) {
   sim$standAgeMap2011 <- asInteger(standAgeMap2011)
   attr(sim$standAgeMap2011, "imputedPixID") <- imputedPixID2011
 
+  ## check that rasters all match
+  compareRaster(sim$rasterToMatchLarge, sim$LCC, sim$standAgeMap2001, sim$standAgeMap2011, orig = TRUE)
+
   return(invisible(sim))
 }
 

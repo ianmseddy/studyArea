@@ -215,7 +215,8 @@ Init <- function(sim) {
   }
 
   if (!suppliedElsewhere("studyArea", sim)) {
-    sim$studyArea <- st_buffer(sim$studyAreaReporting, 20000) ## 20 km buffer
+    #sim$studyArea <- st_buffer(sim$studyAreaReporting, 20000) ## 20 km buffer
+    sim$studyArea <- st_convex_hull(sim$studyAreaReporting)
   }
 
   if (!suppliedElsewhere("studyAreaLarge", sim)) {
@@ -231,7 +232,7 @@ Init <- function(sim) {
                                         sim$rasterToMatchReporting,
                                         crs = crs(sim$rasterToMatchReporting),
                                         res = c(250, 250), method = "ngb",
-                                        filename = file.path(dPath, "RTMR_Quebec_studyArea.tif"),
+                                        filename2 = file.path(dPath, sprintf("rasterToMatchReporting_%s.tif", P(sim)$studyAreaName)),
                                         overwrite = TRUE)
   }
 
@@ -244,7 +245,7 @@ Init <- function(sim) {
                                sim$rasterToMatch,
                                crs = crs(sim$rasterToMatch),
                                res = c(250, 250), method = "ngb",
-                               filename = file.path(dPath, "RTM_Quebec_studyArea.tif"),
+                               filename2 = file.path(dPath, sprintf("rasterToMatch_%s.tif", P(sim)$studyAreaName)),
                                overwrite = TRUE)
   }
 
@@ -257,7 +258,7 @@ Init <- function(sim) {
                                     sim$rasterToMatchLarge,
                                     crs = crs(sim$rasterToMatchLarge),
                                     res = c(250, 250), method = "ngb",
-                                    filename = file.path(dPath, "RTML_Quebec_studyArea.tif"),
+                                    filename2 = file.path(dPath, sprintf("rasterToMatchLarge_%s.tif", P(sim)$studyAreaName)),
                                     overwrite = TRUE)
   }
 
@@ -266,7 +267,7 @@ Init <- function(sim) {
   sim$studyAreaReporting <- st_transform(sim$studyAreaReporting, crs = crs(sim$rasterToMatchReporting)) |> as_Spatial()
 
   ## LCC
-  LCC2005 <- prepInputsLCC(year = 2005, studyArea = sim$studyAreaLarge, destinationPath = dPath) ## TODO: use LCC2010
+  LCC2005 <- prepInputsLCC(year = 2005, rasterToMatch = sim$rasterToMatchLarge, destinationPath = dPath) ## TODO: use LCC2010
 
   allClasses <- 1:39
   treeClassesLCC <- c(1:15, 20, 32, 34:35)

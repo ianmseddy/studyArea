@@ -41,17 +41,25 @@ defineModule(sim, list(
   inputObjects = bindrows(
     #expectsInput("objectName", "objectClass", "input object description", sourceURL, ...),
     expectsInput("rasterToMatch", "RasterLayer", desc = "Raster to match, based on study area."),
-    expectsInput("rasterToMatchLarge", "RasterLayer", desc = "Raster to match (large) based on studyAreaLarge."),
-    expectsInput("rasterToMatchReporting", "RasterLayer", desc = "Raster to match based on studyAreaReporting."),
+    expectsInput("rasterToMatchLarge", "RasterLayer", desc = "Raster to match (large) based on `studyAreaLarge.`"),
+    expectsInput("rasterToMatchReporting", "RasterLayer", desc = "Raster to match based on `studyAreaReporting.`"),
     expectsInput("studyArea", "SpatialPolygons", desc = "Buffered study area in which to run simulations."),
     expectsInput("studyAreaLarge", "SpatialPolygons", desc = "Buffered study area used for parameterization/calibration."),
     expectsInput("studyAreaReporting", "SpatialPolygons", desc = "Unbuffered study area used for reporting/post-processing.")
   ),
   outputObjects = bindrows(
     #createsOutput("objectName", "objectClass", "output object description", ...),
+    createsOutput("fireSenseForestedLCC", "integer", desc = "vector of LCC classes considered to be forested by fireSense."),
+    createsOutput("flammableRTM", "RasterLayer", desc = "RTM without ice/rocks/urban/water. Flammable map with 0 and 1."),
+    createsOutput("LCC", "RasterLayer", desc = "Land cover classification map, derived from national LCC 2005 product."),
+    createsOutput("missingLCCgroup", "character", "the group in `nonForestLCCGroups` that describes forested pixels omitted by LandR"),
+    createsOutput("nonflammableLCC", "integer", desc = "vector of LCC classes considered to be nonsflammable"),
+    createsOutput("nonForestLCCGroups", "list",desc = "named list of non-forested landcover groups for fireSense"),
+    createsOutput("nontreeClasses", "integer", desc = "vector of LCC classes considered to be non-forested/treed."), ## TODO what is this used for?
+    createsOutput("nonTreePixels", "integer", desc = "pixel indices indicating non-treed pixels"), ## TODO: what is this used for?
     createsOutput("rasterToMatch", "RasterLayer", desc = "Raster to match, based on study area."),
-    createsOutput("rasterToMatchLarge", "RasterLayer", desc = "Raster to match (large) based on studyAreaLarge."),
-    createsOutput("rasterToMatchReporting", "RasterLayer", desc = "Raster to match based on studyAreaReporting."),
+    createsOutput("rasterToMatchLarge", "RasterLayer", desc = "Raster to match (large) based on `studyAreaLarge.`"),
+    createsOutput("rasterToMatchReporting", "RasterLayer", desc = "Raster to match based on `studyAreaReporting.`"),
     createsOutput("sppColorVect", "character", desc = NA),
     createsOutput("sppEquiv", "data.table", desc = NA),
     createsOutput("sppEquivCol", "character", desc = "name of column to use in `sppEquiv`."),
@@ -256,6 +264,44 @@ Init <- function(sim) {
   sim$studyArea <- st_transform(sim$studyArea, crs = crs(sim$rasterToMatch)) |> as_Spatial()
   sim$studyAreaLarge <- st_transform(sim$studyAreaLarge, crs = crs(sim$rasterToMatchLarge)) |> as_Spatial()
   sim$studyAreaReporting <- st_transform(sim$studyAreaReporting, crs = crs(sim$rasterToMatchReporting)) |> as_Spatial()
+
+  ## LCC
+  LCC2005 <- prepInputsLCC(year = 2005, studyArea = sim$studyAreaLarge, destinationPath = dPath) ## TODO: use LCC2010
+
+  allClasses <- 1:39
+  treeClassesLCC <- c(1:15, 20, 32, 34:35)
+  nontreeClassesLCC <- allClasses[!(allClasses %in% treeClassesLCC)]
+  treePixelsLCC <- which(sim$LCC[] %in% treeClassesLCC) ## c(1:15, 20, 32, 34:35)
+  nonTreePixels <- which(sim$LCC[] %in% nontreeClassesLCC)
+
+  fireSenseForestedLCC <- LandRforestedLCC <- treeClassesLCC
+  sim$nonForestClasses <- nontreeClassesLCC
+
+  nonflammableLCC  <- c(0, 25, 30, 33, 36:39)
+  nonForestLCCGroups <- list(
+    nonForest_highFlam = c(16:19, 22),
+    nonForest_lowFlam = c(21, 23:24, 26:29, 31)
+  )
+  sim$missingLCCGroup <- "nonForest_highFlam"
+
+  sim$LCC <- setValues(LCC2005, asInteger(getValues(LCC2005)))
+  sim$LandRforestedLCC <- LandRforestedLCC
+  sim$fireSenseForestedLCC <- fireSenseForestedLCC
+  sim$nonForestLCCGroups <- nonForestLCCGroups
+  sim$nonflammableLCC <- nonflammableLCC
+
+  sim$nonTreePixels <- nonTreePixels
+  sim$treeClasses <- sim$LandRforestedLCC
+  sim$nontreeClasses <- nontreeClassesLCC
+  sim$flammableRTM <- defineFlammable(sim$LCC, nonFlammClasses = sim$nonflammableLCC, mask = sim$rasterToMatch)
+
+  ## check that all LCC classes accounted for in forest, nonForest, and non flamm classes for fS
+  fS_classes <- sort(unique(c(sim$fireSenseForestedLCC, unlist(sim$nonForestLCCGroups), sim$nonflammableLCC)))
+  if (!all(allClasses %in% fS_classes)) {
+    stop("Some LCCs not accounted for:\n",
+         "Expected: ", allClasses, "\n",
+         "Assigned to fireSense classes: ", fS_classes)
+  }
 
   ## standAgeMaps
   standAgeMapURL <- paste0(

@@ -14,7 +14,7 @@ defineModule(sim, list(
   documentation = list("README.md", "Quebec_fires_preamble.Rmd"), ## same file
   reqdPkgs = list("geodata", "ggplot2", "nngeo", "sf", "spatialEco", "raster", "units",
                   "PredictiveEcology/climateData@development",
-                  "PredictiveEcology/LandR@development (>= 1.1.0.9019)",
+                  "PredictiveEcology/LandR@development (>= 1.1.0.9020)",
                   "PredictiveEcology/SpaDES.core@development (>= 1.1.1)"),
   parameters = rbind(
     #defineParameter("paramName", "paramClass", value, min, max, "parameter description"),
@@ -294,7 +294,9 @@ Init <- function(sim) {
   sim$nonTreePixels <- nonTreePixels
   sim$treeClasses <- sim$LandRforestedLCC
   sim$nontreeClasses <- nontreeClassesLCC
-  sim$flammableRTM <- defineFlammable(sim$LCC, nonFlammClasses = sim$nonflammableLCC, mask = sim$rasterToMatch)
+  sim$flammableRTM <- defineFlammable(crop(sim$LCC, sim$rasterToMatch),
+                                      nonFlammClasses = sim$nonflammableLCC,
+                                      mask = sim$rasterToMatch)
 
   ## check that all LCC classes accounted for in forest, nonForest, and non flamm classes for fS
   fS_classes <- sort(unique(c(sim$fireSenseForestedLCC, unlist(sim$nonForestLCCGroups), sim$nonflammableLCC)))

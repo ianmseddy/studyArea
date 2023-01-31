@@ -14,7 +14,7 @@ defineModule(sim, list(
   documentation = list("README.md", "Quebec_fires_preamble.Rmd"), ## same file
   reqdPkgs = list("geodata", "ggplot2", "nngeo", "sf", "spatialEco", "raster", "units",
                   "PredictiveEcology/climateData@development",
-                  "PredictiveEcology/LandR@development",
+                  "PredictiveEcology/LandR@development (>= 1.1.0.9019)",
                   "PredictiveEcology/SpaDES.core@development (>= 1.1.1)"),
   parameters = rbind(
     #defineParameter("paramName", "paramClass", value, min, max, "parameter description"),

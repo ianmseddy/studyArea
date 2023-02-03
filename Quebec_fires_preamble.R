@@ -178,7 +178,7 @@ Init <- function(sim) {
       unzip(file.path(dPath, "UA_SHP.zip"), files = files2extract, exdir = dPath)
 
       ## 1. read in data
-      ## 2. remove most eastward polys + isalnds via subset
+      ## 2. remove most eastward polys + islands via subset
       ## 3. buffer 0 to get rid of 'lines'
       ## 4. buffer out, union the polys, they buffer back in (good enough approx of the study area)
       ## 5. remove holes

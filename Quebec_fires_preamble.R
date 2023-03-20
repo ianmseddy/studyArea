@@ -53,7 +53,7 @@ defineModule(sim, list(
     createsOutput("flammableRTM", "RasterLayer", desc = "RTM without ice/rocks/urban/water. Flammable map with 0 and 1."),
     createsOutput("LCC", "RasterLayer", desc = "Land cover classification map, derived from national LCC 2005 product."),
     createsOutput("missingLCCgroup", "character", "the group in `nonForestLCCGroups` that describes forested pixels omitted by LandR"),
-    createsOutput("nonflammableLCC", "integer", desc = "vector of LCC classes considered to be nonsflammable"),
+    createsOutput("nonflammableLCC", "integer", desc = "vector of LCC classes considered to be non-flammable"),
     createsOutput("nonForestLCCGroups", "list",desc = "named list of non-forested landcover groups for fireSense"),
     createsOutput("nontreeClasses", "integer", desc = "vector of LCC classes considered to be non-forested/treed."), ## TODO what is this used for?
     createsOutput("nonTreePixels", "integer", desc = "pixel indices indicating non-treed pixels"), ## TODO: what is this used for?
@@ -63,8 +63,8 @@ defineModule(sim, list(
     createsOutput("sppColorVect", "character", desc = NA),
     createsOutput("sppEquiv", "data.table", desc = NA),
     createsOutput("sppEquivCol", "character", desc = "name of column to use in `sppEquiv`."),
-    createsOutput("standAgeMap2001", "RasterLayer", desc = "raster of time since disurbance for year 2001."),
-    createsOutput("standAgeMap2011", "RasterLayer", desc = "raster of time since disurbance for year 2011."),
+    createsOutput("standAgeMap2001", "RasterLayer", desc = "time since disturbance for year 2001."),
+    createsOutput("standAgeMap2011", "RasterLayer", desc = "time since disturbance for year 2011."),
     createsOutput("studyArea", "SpatialPolygons", desc = "Buffered study area in which to run simulations."),
     createsOutput("studyAreaLarge", "SpatialPolygons", desc = "Buffered study area used for parameterization/calibration."),
     createsOutput("studyAreaPSP", "SpatialPolygonsDataFrame",
